@@ -35,12 +35,6 @@ An action that create a new message schema which is used to parse the incoming m
 | name | *string* | yes | message schema name ( mmust be unique) | - | - | "message schema" |
 | items | *object* | yes | JSON object that describe the schema | -  | -  | `[{ "name": "value", "description": "value", "type": "int", "subItems": [] }]` |
 
-
- - Create RTI Action
- - Get Message Schema
- - Get Message Sources
-
-
 ###Feeds:
 ####Webhook:
  A feed that will create a rule and an RTI action to fire a trigger whenever the provided device conditions are met.
