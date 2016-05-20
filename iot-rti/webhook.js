@@ -14,256 +14,379 @@ var async = require('async');
  * @return     {Object}                                                Done with the result of invokation
  **/
 function main(params) {
-
-    var requiredParams = {
-        apiKey: params.apiKey,
-        authToken: params.authToken
-    };
+    console.log(lifecycleEvent);
+    var requiredParams = ["apiKey", "authToken"];
 
     var baseUrl = 'https://iotrti-prod.mam.ibmserviceengage.com/api/v2';
     var authorizationHeader = "Basic " + new Buffer(params.apiKey + ":" + params.authToken).toString("base64");
 
     var endpoint = 'openwhisk.ng.bluemix.net';
     var triggerName = params.triggerName.split("/");
-    // var whiskCallbackUrl = 'https://' + whisk.getAuthKey() + "@" + endpoint + '/api/v1/namespaces/' + triggerName[1] + '/triggers/' + triggerName[2];
+
     var whiskCallbackUrl = 'https://' + endpoint + '/api/v1/namespaces/' + triggerName[1] + '/triggers/' + triggerName[2];
 
     var lifecycleEvent = params.lifecycleEvent || 'CREATE';
 
+    var ruleName = "Openwhisk Feed " + triggerName[2];
+    
+    var actionName = "Openwhisk Feed " + triggerName[2];
+
     if (lifecycleEvent == 'DELETE') {
-        //     checkParameters(requiredParams, function(missingParams) {
 
-        //         if (missingParams != "") {
-        //             console.error("Missing required parameters: " + missingParams);
-        //             return whisk.error("Missing required parameters: " + missingParams);
-        //         }
-        //     });
-
-
-        console.log("Deleting Feed: " + triggerName[2]);
-        //     async.series({
-        //         deleteRule: function(callback) {
-        //             var ruleName = "Openwhisk Feed " + triggerName[2];
-        //             console.log("Deleting Rule: " + ruleName);
-
-        //             getRuleId(baseUrl, authorizationHeader, ruleName, function(err, ruleId) {
-        //                 if (err) {
-        //                     console.error(err);
-        //                     callback(err, null);
-        //                 } else {
-        //                     deleteRule(baseUrl, authorizationHeader, ruleId, function(error, res, body) {
-        //                         if (!error && res.statusCode === 204) {
-        //                             try {
-        //                                 console.log("Rule deleted successfully");
-        //                                 callback(null, JSON.parse(body));
-        //                             } catch (exception) {
-        //                                 console.error(exception);
-        //                                 callback(exception, null);
-        //                             }
-        //                         } else {
-        //                             console.log("Rule deleted unsuccessfully");
-        //                             if (res) {
-        //                                 console.error("Status code: " + res.statusCode);
-        //                                 callback(res.body, null);
-        //                             } else {
-        //                                 console.error(err);
-        //                                 callback(error, null);
-        //                             }
-        //                         }
-        //                     });
-        //                 }
-        //             });
-        //         },
-        //         deleteAction: function(callback) {
-        //             var actionName = "Openwhisk Feed " + triggerName[2];
-        //             console.log("Deleting Action: " + deleteAction);
-        //             getActionId(baseUrl, authorizationHeader, actionName, function(err, actionId) {
-        //                 if (err)
-        //                     callback(err, null);
-        //                 else {
-        //                     deleteAction(baseUrl, authorizationHeader, actionId, function(error, res, body) {
-        //                         if (!error && res.statusCode === 204) {
-        //                             try {
-        //                                 console.log("Action deleted successfully");
-        //                                 callback(null, JSON.parse(body));
-        //                             } catch (exception) {
-        //                                 console.error(exception);
-        //                                 callback(exception, null);
-        //                             }
-        //                         } else {
-        //                             console.log("Action deleted unsuccessfully");
-        //                             if (res) {
-        //                                 console.error("Status code: " + res.statusCode);
-        //                                 callback(res.body, null);
-        //                             } else {
-        //                                 console.error(error);
-        //                                 callback(error, null);
-        //                             }
-        //                         }
-        //                     });
-        //                 }
-        //             });
-        //         }
-        //     }, function(err, result) {
-        //         if (err) {
-        //             console.error(err);
-        //             return whisk.error(err);
-        //         } else
-        //             return whisk.done({
-        //                 "result": "Feed has been deleted successfully"
-        //             });
-        //     });
-
-    } else if (lifecycleEvent == 'UPDATE') {
-        console.log("Updating Feed: " + triggerName[2]);
-
-
-    } else { //Default: CREATE
-        requiredParams.schemaName = params.schemaName;
-        requiredParams.condition = params.condition;
-        checkParameters(requiredParams, function(missingParams) {
-
+        checkParameters(params, requiredParams, function(missingParams) {
             if (missingParams != "") {
                 console.error("Missing required parameters: " + missingParams);
                 return whisk.error("Missing required parameters: " + missingParams);
+            } else {
+                console.log("All required parameters are passed");
+                handleTriggerDeletion(triggerName, ruleName, baseUrl, authorizationHeader);
             }
+
         });
 
-        console.log("Creating Feed: " + triggerName[2]);
 
-        async.series({
-                schemaId: function(callback) {
-                    console.log("Getting Message Schema");
-                    getMsgSchemas(baseUrl, authorizationHeader, params.schemaName, function(err, res, body) {
-                        if (!err && res.statusCode === 200) {
-                            try {
-                                var parsedBody = JSON.parse(body);
-                                for (var schema in parsedBody) {
-                                    if (parsedBody[schema].name == params.schemaName) {
-                                        callback(null, parsedBody[schema].id);
-                                        break;
-                                    }
-                                }
-                            } catch (exception) {
-                                console.error(exception);
-                                callback(exception, null);
-                            }
-                        } else {
-                            if (res) {
-                                console.error("Message Schema can not be found (Status code: " + res.statusCode + ")");
-                                console.error(res.body);
-                                callback(res.body, null);
-                            } else {
-                                console.error(err);
-                                callback(err, null);
-                            }
-                        }
-                    });
-                },
-                actionId: function(callback) {
 
-                    var actionName = "Openwhisk Feed " + triggerName[2];
-                    console.log("Creating RTI Action: " + actionName);
-                    createAction(baseUrl, authorizationHeader, actionName, params.description, whiskCallbackUrl, params.callbackBody, function(err, res, body) {
-                        if (!err && res.statusCode === 200) {
-                            try {
-                                var parsedBody = JSON.parse(body);
-                                callback(null, parsedBody.id);
-                            } catch (exception) {
-                                console.error(exception);
-                                callback(exception, null);
-                            }
-                        } else {
-                            if (res) {
-                                console.error("RTI action can not be created (Status code: " + res.statusCode + ")");
-                                console.error(res.body);
-                                callback(res.body, null);
-                            } else {
-                                console.error(err);
-                                callback(err, null);
-                            }
-                        }
-                    });
-                }
-            },
-            function(err, results) {
-                if (err) {
-                    console.error("Can not create the feed :" + triggerName[2]);
-                    console.error(err);
-                    return whisk.error(err);
-                }
-                var ruleName = "Openwhisk Feed " + triggerName[2];
+    } else if (lifecycleEvent == 'UPDATE') {
+        if (!requiredParamseq.length > 2)
+            return whisk.error("There is nothing to update");
 
-                console.log("Creating Rule: " + triggerName[2]);
-                var body = {
-                    "name": ruleName,
-                    "description": params.description || "A rule created by Openwhisk Feed " + triggerName[2],
-                    "disabled": false,
-                    "severity": params.severity || 4,
-                    "messageSchemas": [results.schemaId], //array of msgSchemas names
-                    "condition": params.condition,
-                    "actions": [results.actionId]
-                };
+        handleTriggerUpdating();
 
-                var options = {
-                    method: 'POST',
-                    url: baseUrl + "/rule",
-                    body: JSON.stringify(body),
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': authorizationHeader
-                    },
-                    auth: {
-                        user: params.apiKey,
-                        password: params.authToken
-                    }
-                };
+    } else { //Default: CREATE
 
-                require('request')(options, function(err, res, body) {
-                    if (!err && res.statusCode === 200) {
-                        console.log(JSON.parse(body));
-                        whisk.done({
-                            response: "Feed created successfully"
-                        });
-                    } else {
+        requiredParams.push("schemaName", "condition");
 
-                        console.log("Rolling Back the Created RTI Action");
-                        deleteAction(baseUrl, authorizationHeader, results.actionId, function(error, res, body) {
-                            if (!error && res.statusCode === 204) {
-                                try {
-                                    console.log("Actoin deleted successfully");
-                                    return whisk.error("Feed can not be created");
-                                } catch (exception) {
-                                    console.error(exception);
-                                }
-                            } else {
-                                console.log("Actoin deleted unsuccessfully");
-                                if (res) {
-                                    console.error("Status code: " + res.statusCode);
-                                    console.log(res.body);
-                                } else {
-                                    console.error(error);
-                                }
-                            }
-                        });
+        checkParameters(params, requiredParams, function(missingParams) {
+            console.log("Required Parameters: " + requiredParams);
+            if (missingParams != "") {
+                console.error("Missing required parameters: " + missingParams);
+                return whisk.error("Missing required parameters: " + missingParams);
+            } else
+                handleTriggerCreation(triggerName, baseUrl, authorizationHeader, params.schemaName, params.description, whiskCallbackUrl, params.callbackBody, ruleName, actionName, params.severity, params.condition);
 
-                        if (res) {
-                            console.log("Status code: " + res.statusCode);
-                            whisk.error({
-                                response: JSON.parse(body)
-                            });
-                        } else {
-                            console.error(err);
-                            whisk.error(err);
-                        }
-                    }
-                });
-            }
-        );
+        });
+
     }
     return whisk.async();
 
 }
+
+
+function handleTriggerCreation(triggerName, baseUrl, authorizationHeader, schemaName, description, whiskCallbackUrl, callbackBody, ruleName, actionName, severity, condition) {
+    console.log("Creating Feed: " + triggerName[2]);
+
+    async.series({
+            schemaId: function(callback) {
+                console.log("Getting Message Schema");
+                getMsgSchemas(baseUrl, authorizationHeader, schemaName, function(err, res, body) {
+                    if (!err && res.statusCode === 200) {
+                        try {
+                            var parsedBody = JSON.parse(body);
+                            for (var schema in parsedBody) {
+                                if (parsedBody[schema].name == schemaName) {
+                                    return callback(null, parsedBody[schema].id);
+                                }
+                            }
+                            return callback("Message Schema can not be found", null);
+                        } catch (exception) {
+                            console.error(exception);
+                            return callback(exception, null);
+                        }
+                    } else {
+                        if (res) {
+                            console.error("Message Schema can not be found (Status code: " + res.statusCode + ")");
+                            console.error(res.body);
+                            return callback(res.body, null);
+                        } else {
+                            console.error(err);
+                            return callback(err, null);
+                        }
+                    }
+                });
+            },
+            actionId: function(callback) {
+
+                console.log("Creating RTI Action: " + actionName);
+                createAction(baseUrl, authorizationHeader, actionName, description, whiskCallbackUrl, callbackBody, function(err, res, body) {
+                    if (!err && res.statusCode === 200) {
+                        try {
+                            var parsedBody = JSON.parse(body);
+                            return callback(null, parsedBody.id);
+                        } catch (exception) {
+                            console.error(exception);
+                            return callback(exception, null);
+                        }
+                    } else {
+                        if (res) {
+                            console.error("RTI action can not be created (Status code: " + res.statusCode + ")");
+                            console.error(res.body);
+                            return callback(res.body, null);
+                        } else {
+                            console.error(err);
+                            return callback(err, null);
+                        }
+                    }
+                });
+            }
+        },
+        function(err, results) {
+            if (err) {
+                console.error("Can not create the feed :" + triggerName[2]);
+                console.error(err);
+                return whisk.error(err);
+            }
+
+            console.log("Creating Rule: " + triggerName[2]);
+            var body = {
+                "name": ruleName,
+                "description": description || "A rule created by Openwhisk Feed " + triggerName[2],
+                "disabled": false,
+                "severity": severity || 4,
+                "messageSchemas": [results.schemaId],
+                "condition": condition,
+                "actions": [results.actionId]
+            };
+
+            var options = {
+                method: 'POST',
+                url: baseUrl + "/rule",
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': authorizationHeader
+                }
+            };
+
+            require('request')(options, function(err, res, body) {
+                if (!err && res.statusCode === 200) {
+                    console.log(JSON.parse(body));
+                    whisk.done({
+                        response: "Feed created successfully"
+                    });
+                } else {
+
+                    console.log("Rolling Back the Created RTI Action");
+                    deleteAction(baseUrl, authorizationHeader, results.actionId, function(error, res, body) {
+                        if (!error && res.statusCode === 204) {
+                            try {
+                                console.log("Actoin deleted successfully");
+                                return whisk.error("Feed can not be created");
+                            } catch (exception) {
+                                console.error(exception);
+                            }
+                        } else {
+                            console.log("Actoin deleted unsuccessfully");
+                            if (res) {
+                                console.error("Status code: " + res.statusCode);
+                                console.log(res.body);
+                            } else {
+                                console.error(error);
+                            }
+                        }
+                    });
+
+                    if (res) {
+                        console.log("Status code: " + res.statusCode);
+                        whisk.error({
+                            response: JSON.parse(body)
+                        });
+                    } else {
+                        console.error(err);
+                        whisk.error(err);
+                    }
+                }
+            });
+        }
+    );
+}
+
+function handleTriggerUpdating(params, triggerName, ) {
+    console.log("Updating Feed: " + triggerName[2]);
+
+    async.parallel({
+            schemaId: function(callback) {
+                if (!params.hasOwnProperty("schemaName"))
+                    return callback(null, "nothing to update in message schema");
+                console.log("Getting Message Schema");
+                getMsgSchemas(baseUrl, authorizationHeader, schemaName, function(err, res, body) {
+                    if (!err && res.statusCode === 200) {
+                        try {
+                            var parsedBody = JSON.parse(body);
+                            for (var schema in parsedBody) {
+                                if (parsedBody[schema].name == schemaName) {
+                                    return callback(null, parsedBody[schema].id);
+                                }
+                            }
+                            return callback("Message Schema can not be found", null);
+                        } catch (exception) {
+                            console.error(exception);
+                            return callback(exception, null);
+                        }
+                    } else {
+                        if (res) {
+                            console.error("Message Schema can not be found (Status code: " + res.statusCode + ")");
+                            console.error(res.body);
+                            return callback(res.body, null);
+                        } else {
+                            console.error(err);
+                            return callback(err, null);
+                        }
+                    }
+                });
+            },
+            actionId: function(callback) {
+                if (!params.hasOwnProperty('callbackBody'))
+                    return callback(null, "nothing to update in action")
+                console.log("Updating RTI Action: " + actionName);
+                createAction(baseUrl, authorizationHeader, actionName, description, whiskCallbackUrl, callbackBody, function(err, res, body) {
+                    if (!err && res.statusCode === 200) {
+                        try {
+                            var parsedBody = JSON.parse(body);
+                            return callback(null, parsedBody.id);
+                        } catch (exception) {
+                            console.error(exception);
+                            return callback(exception, null);
+                        }
+                    } else {
+                        if (res) {
+                            console.error("RTI action can not be updated (Status code: " + res.statusCode + ")");
+                            console.error(res.body);
+                            return callback(res.body, null);
+                        } else {
+                            console.error(err);
+                            return callback(err, null);
+                        }
+                    }
+                });
+            }
+        },
+        function(err, results) {
+            if (err) {
+                console.error("Can not update the feed :" + triggerName[2]);
+                console.error(err);
+                return whisk.error(err);
+            }
+
+            console.log("Updating Rule: " + triggerName[2]);
+
+            var msgSchema;
+
+            var body = {
+                "description": params.description,
+                "severity": params.severity,
+                "messageSchemas": [results.schemaId],
+                "condition": params.condition,
+                "actions": [results.actionId]
+            };
+
+            var options = {
+                method: 'PUT',
+                url: baseUrl + "/rule",
+                body: JSON.stringify(body),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': authorizationHeader
+                }
+            };
+
+            require('request')(options, function(err, res, body) {
+                if (!err && res.statusCode === 200) {
+                    console.log(JSON.parse(body));
+                    whisk.done({
+                        response: "Feed updated successfully"
+                    });
+                } else {
+                    if (res) {
+                        console.log("Status code: " + res.statusCode);
+                        whisk.error({
+                            response: JSON.parse(body)
+                        });
+                    } else {
+                        console.error(err);
+                        whisk.error(err);
+                    }
+                }
+            });
+        }
+    );
+}
+
+function handleTriggerDeletion(triggerName, ruleName, baseUrl, authorizationHeader) {
+    console.log("Deleting Feed: " + triggerName[2]);
+
+    async.series({
+        deleteRule: function(callback) {
+            console.log("Deleting Rule: " + ruleName);
+
+            getRuleId(baseUrl, authorizationHeader, ruleName, function(err, ruleId) {
+                if (err) {
+                    console.error(err);
+                    callback(err, null);
+                } else {
+                    deleteRule(baseUrl, authorizationHeader, ruleId, function(error, res, body) {
+                        if (!error && res.statusCode === 204) {
+                            try {
+                                console.log("Rule deleted successfully");
+                                return callback(null, "done");
+                            } catch (exception) {
+                                console.error(exception);
+                                return callback(exception, null);
+                            }
+                        } else {
+                            console.log("Rule deleted unsuccessfully");
+                            if (res) {
+                                console.error("Status code: " + res.statusCode);
+                                return callback(res.body, null);
+                            } else {
+                                console.error(err);
+                                return callback(error, null);
+                            }
+                        }
+                    });
+                }
+            });
+        },
+        deleteAction: function(callback) {
+            var actionName = "Openwhisk Feed " + triggerName[2];
+            console.log("Deleting Action: " + deleteAction);
+            getActionId(baseUrl, authorizationHeader, actionName, function(err, actionId) {
+                if (err)
+                    callback(err, null);
+                else {
+                    deleteAction(baseUrl, authorizationHeader, actionId, function(error, res, body) {
+                        if (!error && res.statusCode === 204) {
+                            try {
+                                console.log("Action has been deleted successfully");
+                                return callback(null, "done");
+                            } catch (exception) {
+                                console.error(exception);
+                                return callback(exception, null);
+                            }
+                        } else {
+                            console.log("Action has been deleted unsuccessfully");
+                            if (res) {
+                                console.error("Status code: " + res.statusCode);
+                                return callback(res.statusCode, null);
+                            } else {
+                                console.error(error);
+                                return callback(error, null);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }, function(err, result) {
+        if (err) {
+            console.error(err);
+            return whisk.error(err);
+        } else
+            return whisk.done({
+                "result": "Feed has been deleted successfully"
+            });
+    });
+}
+
 
 /**
  * { function_description }
@@ -374,6 +497,8 @@ function deleteAction(baseUrl, authorizationHeader, actionId, callback) {
     });
 }
 
+
+
 /**
  * Get all RTI actions of type webhook.
  *
@@ -399,6 +524,8 @@ function getActions(baseUrl, authorizationHeader, callback) {
     });
 }
 
+
+
 /**
  * Get an RTI action id by its name
  *
@@ -415,7 +542,6 @@ function getActionId(baseUrl, authorizationHeader, actionName, callback) {
         if (!err && res.statusCode === 200) {
             try {
                 var parsedBody = JSON.parse(body);
-                console.log(parsedBody);
                 for (var action in parsedBody) {
                     if (parsedBody[action].name == actionName) {
                         return callback(null, parsedBody[action].id);
@@ -437,6 +563,8 @@ function getActionId(baseUrl, authorizationHeader, actionName, callback) {
         }
     });
 }
+
+
 
 /**
  * Get all rules within RTI service instance
@@ -515,6 +643,27 @@ function deleteRule(baseUrl, authorizationHeader, ruleId, callback) {
 }
 
 
+function updateAction(baseUrl, authorizationHeader, actionId, callbackBody, callback) {
+
+    var actionFields = {
+        "body": callbackBody
+    };
+
+    var options = {
+        method: 'PUT',
+        url: baseUrl + "/action",
+        body: JSON.stringify(body),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authorizationHeader
+        }
+    };
+
+    require('request')(options, function(err, res, body) {
+        return callback(err, res, body);
+    });
+}
+
 /**
  *  A function that check whether the parameters passed are required or not
  *
@@ -525,17 +674,15 @@ function deleteRule(baseUrl, authorizationHeader, ruleId, callback) {
  *                                   string or an empyt string if the params is
  *                                   empty
  */
-function checkParameters(params, callback) {
-    var missingParams = "";
-    var keys = Object.keys(params);
-    keys.forEach(function(parameter) {
-        if (!params[parameter]) {
-            if (missingParams == "")
-                missingParams += parameter;
-            else
-                missingParams += "," + parameter
+function checkParameters(params, requiredParams, callback) {
+    console.log("Checking Existiance of Required Parameters");
+    var missingParams = [];
+    for (var i = requiredParams.length - 1; i >= 0; i--) {
+        if (!params.hasOwnProperty(requiredParams[i])) {
+            missingParams.push(requiredParams[i]);
         }
-        if (parameter == keys.length - 1)
+        if (i == 0)
             return callback(missingParams);
-    });
+
+    }
 }
