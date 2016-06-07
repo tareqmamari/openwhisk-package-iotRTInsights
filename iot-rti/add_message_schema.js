@@ -8,11 +8,11 @@ var request = require('request');
  * An action that create a new message schema which is used to parse the
  * incoming messages to know its attributes whick will lead to consistent
  * analytics
- * @param      {string}  apiKey         (required)                     RTI API Key
- * @param      {string}  authToken      (required)                     Authentication token of an IoT RTI instance
- * @param      {string}  name           (optional)                     Message schema name (must be unique)
- * @param      {object}  items          (required)                     JSON object that describe the schema
- * @return     {Object}                                                Done with the result of invokation
+ * @param      {string}  apiKey         (required)  RTI API Key
+ * @param      {string}  authToken      (required)  Authentication token of an IoT RTI instance
+ * @param      {string}  name           (optional)  Message schema name (must be unique)
+ * @param      {object}  items          (required)  JSON object that describe the schema
+ * @return     {Object}                             Done with the result of invokation
  **/
 
 function main(params) {
@@ -44,16 +44,15 @@ function main(params) {
                 response: JSON.parse(body)
             });
         } else {
-            if (res) {
-                console.error("Status code: " + res.statusCode);
-                console.error(res.body);
-                whisk.error({
-                    response: JSON.parse(body)
-                });
-            } else {
-                console.error(err);
-                whisk.error(err);
-            }
+             console.error('http status code:', (res || {}).statusCode);
+             console.error('error:', err);
+             console.error('body:', body);
+             console.error('response',res);
+             whisk.error({
+                 statusCode: (res || {}).statusCode,
+                 error: err,
+                 body: body
+             });
         }
     });
 
