@@ -23,12 +23,12 @@ function main(params) {
     var endpoint = 'openwhisk.ng.bluemix.net';
     var triggerName = params.triggerName.split("/");
 
-    var whiskCallbackUrl = 'https://' + endpoint + '/api/v1/namespaces/' + triggerName[1] + '/triggers/' + triggerName[2];
+    var whiskCallbackUrll = 'https://' + endpoint + '/api/v1/namespaces/' + triggerName[1] + '/triggers/' + triggerName[2];
 
     var lifecycleEvent = params.lifecycleEvent || 'CREATE';
 
     var ruleName = "Openwhisk Feed " + triggerName[2];
-    
+
     var actionName = "Openwhisk Feed " + triggerName[2];
 
     if (lifecycleEvent == 'DELETE') {
@@ -44,13 +44,16 @@ function main(params) {
 
         });
 
-
+    } else if (lifecycleEvent == 'PAUSE') {
+        return whisk.error('PAUSE lifecyle event has not been implemented yet');
+    } else if (lifecycleEvent == 'UNPAUSE') {
+        return whisk.error('UNPAUSE lifecyle event has not been implemented yet');
 
     } else if (lifecycleEvent == 'UPDATE') {
         if (!requiredParamseq.length > 2)
             return whisk.error("There is nothing to update");
 
-        handleTriggerUpdating();
+        handleTriggerUpdating(params, triggerName);
 
     } else { //Default: CREATE
 
@@ -65,10 +68,9 @@ function main(params) {
                 handleTriggerCreation(triggerName, baseUrl, authorizationHeader, params.schemaName, params.description, whiskCallbackUrl, params.callbackBody, ruleName, actionName, params.severity, params.condition);
 
         });
-
     }
-    return whisk.async();
 
+    return whisk.async();
 }
 
 
@@ -105,7 +107,6 @@ function handleTriggerCreation(triggerName, baseUrl, authorizationHeader, schema
                 });
             },
             actionId: function(callback) {
-
                 console.log("Creating RTI Action: " + actionName);
                 createAction(baseUrl, authorizationHeader, actionName, description, whiskCallbackUrl, callbackBody, function(err, res, body) {
                     if (!err && res.statusCode === 200) {
@@ -164,7 +165,6 @@ function handleTriggerCreation(triggerName, baseUrl, authorizationHeader, schema
                         response: "Feed created successfully"
                     });
                 } else {
-
                     console.log("Rolling Back the Created RTI Action");
                     deleteAction(baseUrl, authorizationHeader, results.actionId, function(error, res, body) {
                         if (!error && res.statusCode === 204) {
@@ -200,14 +200,17 @@ function handleTriggerCreation(triggerName, baseUrl, authorizationHeader, schema
     );
 }
 
-function handleTriggerUpdating(params, triggerName, ) {
+function handleTriggerUpdating(params, triggerName) {
+
     console.log("Updating Feed: " + triggerName[2]);
 
     async.parallel({
             schemaId: function(callback) {
                 if (!params.hasOwnProperty("schemaName"))
                     return callback(null, "nothing to update in message schema");
+
                 console.log("Getting Message Schema");
+
                 getMsgSchemas(baseUrl, authorizationHeader, schemaName, function(err, res, body) {
                     if (!err && res.statusCode === 200) {
                         try {
@@ -236,8 +239,10 @@ function handleTriggerUpdating(params, triggerName, ) {
             },
             actionId: function(callback) {
                 if (!params.hasOwnProperty('callbackBody'))
-                    return callback(null, "nothing to update in action")
+                    return callback(null, "nothing to update in action");
+
                 console.log("Updating RTI Action: " + actionName);
+
                 createAction(baseUrl, authorizationHeader, actionName, description, whiskCallbackUrl, callbackBody, function(err, res, body) {
                     if (!err && res.statusCode === 200) {
                         try {
@@ -410,6 +415,7 @@ function createAction(baseUrl, authorizationHeader, name, description, whiskCall
     // var headers = {
     //     'Authorization': new Buffer(whisk.getAuthKey()).toString("base64")
     // };
+    console.log('createAction: started');
 
     var defaultActionBody = "{ \"rule\" : \"{{ruleName}}\" , \"condition\" : \"{{ruleCondition}}\" , \"message\" : \"{{message}}\" }";
 
@@ -482,6 +488,7 @@ function getMsgSchemas(baseUrl, authorizationHeader, name, callback) {
  *                                              the error , response as well as
  *                                              the body of the http request
  */
+
 function deleteAction(baseUrl, authorizationHeader, actionId, callback) {
     var options = {
         method: 'DELETE',
@@ -601,9 +608,9 @@ function getRuleId(baseUrl, authorizationHeader, ruleName, callback) {
                         return callback(null, parsedBody[rule].id);
                     }
                 }
-            } catch (exception) {
-                console.error(exception);
-                return callback(exception, null);
+            } catch (e) {
+                console.error(e);
+                return callback(e, null);
             }
         } else {
             if (res) {
@@ -646,13 +653,13 @@ function deleteRule(baseUrl, authorizationHeader, ruleId, callback) {
 function updateAction(baseUrl, authorizationHeader, actionId, callbackBody, callback) {
 
     var actionFields = {
-        "body": callbackBody
+        "fields": callbackBody
     };
 
     var options = {
         method: 'PUT',
         url: baseUrl + "/action",
-        body: JSON.stringify(body),
+        body: JSON.stringify(actionFields),
         headers: {
             'Content-Type': 'application/json',
             'Authorization': authorizationHeader
