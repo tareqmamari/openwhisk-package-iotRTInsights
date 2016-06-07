@@ -43,16 +43,15 @@ function main(params) {
                 response: JSON.parse(body)
             });
         } else {
-            if (res) {
-                console.error("Status code: " + res.statusCode);
-                console.error(res.body);
-                whisk.error({
-                    response: body
-                });
-            } else {
-                console.error(err);
-                whisk.error(err);
-            }
+             console.error('http status code:', (res || {}).statusCode);
+             console.error('error:', err);
+             console.error('body:', body);
+             console.error('response',res);
+             whisk.error({
+                 statusCode: (res || {}).statusCode,
+                 error: err,
+                 body: body
+             });
         }
     });
 
