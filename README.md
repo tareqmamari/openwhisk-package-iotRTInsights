@@ -10,11 +10,13 @@ This repository is intended to document all actions and feeds withing Watson IoT
 | `/whisk.system/iot-rti` | package | apiKey, authToken  | IoT Real time insight service package |
 | `/whisk.system/iot-rti/webhook` | feed | see webhook [details](#webhook) | a feed to register for events by RTI, this will fire a trigger whenever specific conditions are met |
 | `/whisk.system/iot-rti/add_message_source` | action | see action [details](#add-message-source) | An action to add a message source ( Watson IoT Platform) to Real-time insight service |
+| `/whisk.system/iot-rti/add_message_schema` | action | see action [details](#add-message-schema) | An action to add a message schema|
+
 
 ###Actions:
 ####Add Message Source:
-An action to add a message source ( Watson IoT Platform) to Real-time insight service.
-
+`/whisk.system/iot-rti/add_message_source` is an action to add a message source ( Watson IoT Platform) to Real-time insight service.
+#####Parameters
 | **Parameter**     | **Type** | **Required** | **Description**| **Options** | **Default** | **Example** |
 | ------------- | ---- | -------- | ------------ | ------- | ------- |------- |
 | orgId | *string* | yes  |  Watson IoT platform organization Id | - | - | "XXXXX" |
@@ -24,6 +26,11 @@ An action to add a message source ( Watson IoT Platform) to Real-time insight se
 | authToken | *string* | yes  | RTP authentication token| - | - |"YYYYYYY" |
 | name | *string* | no | name of the message source | - | "Message Source "+orgId |"Message Source htpsa" |
 | disabled | *boolean* | no | disable or enable the message source | false,true | false | false |
+
+#####Usage
+```bash
+wsk action invoke /whisk.system/iot/add_message_source -p orgId 'xxxxx' -p apiKey 'yyyyyy' -p authToken 'zzzzzzzz' -p typeId 'sampleiot' -p deviceId "deviceId" --blocking
+```
 
 ####Add Message Schema
 An action that create a new message schema which is used to parse the incoming messages to know its attributes whick will lead to consistent analytics.
@@ -35,6 +42,20 @@ An action that create a new message schema which is used to parse the incoming m
 | name | *string* | yes | message schema name ( mmust be unique) | - | - | "message schema" |
 | items | *object* | yes | JSON object that describe the schema | -  | -  | `[{ "name": "value", "description": "value", "type": "int", "subItems": [] }]` |
 
+####Create Device Type
+
+Example:
+```javascript
+ {
+        "response": {
+            "classId": "Device",
+            "createdDateTime": "2016-06-06T10:26:41+00:00",
+            "deviceInfo": {},
+            "id": "newType",
+            "updatedDateTime": "2016-06-06T10:26:41+00:00"
+        }
+    }
+```
 ###Feeds:
 ####Webhook:
  A feed that will create a rule and an RTI action to fire a trigger whenever the provided device conditions are met.

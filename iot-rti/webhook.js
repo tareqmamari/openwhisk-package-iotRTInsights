@@ -23,7 +23,7 @@ function main(params) {
     var endpoint = 'openwhisk.ng.bluemix.net';
     var triggerName = params.triggerName.split("/");
 
-    var whiskCallbackUrll = 'https://' + endpoint + '/api/v1/namespaces/' + triggerName[1] + '/triggers/' + triggerName[2];
+    var whiskCallbackUrl = 'https://' + endpoint + '/api/v1/namespaces/' + triggerName[1] + '/triggers/' + triggerName[2];
 
     var lifecycleEvent = params.lifecycleEvent || 'CREATE';
 
