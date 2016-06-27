@@ -1,26 +1,44 @@
+/*
+ * Copyright 2015-2016 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var async = require('async');
 
 /**
  * A feed built on top of IoT RTI rules and actions to fire a trigger whenever certain conditions are met.
  * @param      {string}  triggerName    (Provided by the system)       Trigger full name i.e. /namespace/triggerName/
  * @param      {string}  lifeCycle      (optional)                     Feed lifecyle, default: CREATE
- * @param      {string}  apiKey         (required)                     RTI API Key
- * @param      {string}  authToken      (required)                     Authentication token of an IoT RTI instance
+ * @param      {string}  apiKey         (required)                     API Key of IoT RTI instance
+ * @param      {string}  authToken      (required)                     Authentication token of IoT RTI instance
  * @param      {string}  schemaName     (required)                     Message Schema name
- * @param      {string}  condition      (required)                     Condition Provided for the trule to trigger the action when this condition met
- * @param      {string}  callbackBody   (optional)                     Event message content, default: {"rule":"{{ruleName}}","condition":"{{ruleCondition}}","message":"{{message}}"}"
+ * @param      {string}  condition      (required)                     Condition Provided for RTI Rule to trigger the action when this condition is met
+ * @param      {string}  callbackBody   (optional)                     Event content, default: {"rule":"{{ruleName}}","condition":"{{ruleCondition}}","message":"{{message}}"}"
  * @param      {string}  description    (optional)                     Rule Description, default: "A rule created by Openwhisk Feed @ " + current date and time
  * @param      {integer} severity       (optional)                     Rule severity, default: 4
- * @return     {Object}                                                Done with the result of invokation
+ * @param      {string}  endpoint       (optional)                     Openwhisk endpoint where it is deployed, default: openwhisk.ng.bluemix.net
+ * @return     {Object}                                                Done with the result of invocation
  **/
 function main(params) {
-    console.log(lifecycleEvent);
+
     var requiredParams = ["apiKey", "authToken"];
 
     var baseUrl = 'https://iotrti-prod.mam.ibmserviceengage.com/api/v2';
     var authorizationHeader = "Basic " + new Buffer(params.apiKey + ":" + params.authToken).toString("base64");
 
-    var endpoint = 'openwhisk.ng.bluemix.net';
+    var endpoint = params.endpoint || 'openwhisk.ng.bluemix.net';
+
     var triggerName = params.triggerName.split("/");
 
     var whiskCallbackUrl = 'https://' + endpoint + '/api/v1/namespaces/' + triggerName[1] + '/triggers/' + triggerName[2];
@@ -28,7 +46,6 @@ function main(params) {
     var lifecycleEvent = params.lifecycleEvent || 'CREATE';
 
     var ruleName = "Openwhisk Feed " + triggerName[2];
-
     var actionName = "Openwhisk Feed " + triggerName[2];
 
     if (lifecycleEvent == 'DELETE') {
@@ -45,9 +62,9 @@ function main(params) {
         });
 
     } else if (lifecycleEvent == 'PAUSE') {
-        return whisk.error('PAUSE lifecyle event has not been implemented yet');
+        return whisk.error('PAUSE event lifecyle has not been implemented yet');
     } else if (lifecycleEvent == 'UNPAUSE') {
-        return whisk.error('UNPAUSE lifecyle event has not been implemented yet');
+        return whisk.error('UNPAUSE event lifecyle has not been implemented yet');
 
     } else if (lifecycleEvent == 'UPDATE') {
         if (!requiredParamseq.length > 2)
@@ -72,7 +89,6 @@ function main(params) {
 
     return whisk.async();
 }
-
 
 function handleTriggerCreation(triggerName, baseUrl, authorizationHeader, schemaName, description, whiskCallbackUrl, callbackBody, ruleName, actionName, severity, condition) {
     console.log("Creating Feed: " + triggerName[2]);
@@ -180,7 +196,11 @@ function handleTriggerCreation(triggerName, baseUrl, authorizationHeader, schema
                                 console.error("Status code: " + res.statusCode);
                                 console.log(res.body);
                             } else {
-                                console.error(error);
+                                whisk.error({
+                                    statusCode: (res || {}).statusCode,
+                                    error: err,
+                                    body: body
+                                });
                             }
                         }
                     });
@@ -392,29 +412,25 @@ function handleTriggerDeletion(triggerName, ruleName, baseUrl, authorizationHead
     });
 }
 
-
 /**
  * { function_description }
  *
- * @param      {string}    baseUrl              The base url of RTI REST API
+ * @param      {string}    baseUrl              The base Url of RTI REST API
  * @param      {string}    authorizationHeader  The authorization header for RTI
  *                                              service
  * @param      {string}    name                 The name of the RTI action to be
  *                                              created
  * @param      {string}    description          The description of the RTI
  *                                              action to be created
- * @param      {string}    whiskCallbackUrl     The whisk callback url (this
+ * @param      {string}    whiskCallbackUrl     The whisk callback Url (this
  *                                              feed trigger)
  * @param      {string}    callbackBody         The callback body to be sent
  *                                              when firing this feed trigger
  * @param      {Function}  callback             A callback function that pass
  *                                              the error , response as well as
- *                                              the body of the http request
+ *                                              the body of the HTTP request
  */
 function createAction(baseUrl, authorizationHeader, name, description, whiskCallbackUrl, callbackBody, callback) {
-    // var headers = {
-    //     'Authorization': new Buffer(whisk.getAuthKey()).toString("base64")
-    // };
     console.log('createAction: started');
 
     var defaultActionBody = "{ \"rule\" : \"{{ruleName}}\" , \"condition\" : \"{{ruleCondition}}\" , \"message\" : \"{{message}}\" }";
@@ -424,7 +440,6 @@ function createAction(baseUrl, authorizationHeader, name, description, whiskCall
         "method": "POST",
         "username": whisk.getAuthKey().split(":")[0],
         "password": whisk.getAuthKey().split(":")[1],
-        // "headers": JSON.stringify(headers),
         "contentType": "application/json",
         "body": callbackBody || defaultActionBody
     };
@@ -454,13 +469,13 @@ function createAction(baseUrl, authorizationHeader, name, description, whiskCall
 /**
  * A function to get all message schemas in an RTI service instance.
  *
- * @param      {string}    baseUrl              The base url of RTI REST API
+ * @param      {string}    baseUrl              The base Url of RTI REST API
  * @param      {string}    authorizationHeader  The authorization header for RTI
  *                                              service
  * @param      {string}    name                 The name of message schema
  * @param      {Function}  callback             A callback function that pass
  *                                              the error , response as well as
- *                                              the body of the http request
+ *                                              the body of the HTTP request
  */
 function getMsgSchemas(baseUrl, authorizationHeader, name, callback) {
     var options = {
@@ -480,15 +495,14 @@ function getMsgSchemas(baseUrl, authorizationHeader, name, callback) {
 /**
  * a function to delete an RTI action by its Id
  *
- * @param      {string}    baseUrl              The base url of RTI REST API
+ * @param      {string}    baseUrl              The base Url of RTI REST API
  * @param      {string}    authorizationHeader  The authorization header for RTI
  *                                              service
  * @param      {string}    actionId             The RTI action id
  * @param      {Function}  callback             A callback function that pass
  *                                              the error , response as well as
- *                                              the body of the http request
+ *                                              the body of the HTTP request
  */
-
 function deleteAction(baseUrl, authorizationHeader, actionId, callback) {
     var options = {
         method: 'DELETE',
@@ -504,17 +518,15 @@ function deleteAction(baseUrl, authorizationHeader, actionId, callback) {
     });
 }
 
-
-
 /**
- * Get all RTI actions of type webhook.
+ * Get all RTI actions of type Webhook.
  *
- * @param      {string}    baseUrl              The base url of RTI REST API
+ * @param      {string}    baseUrl              The base Url of RTI REST API
  * @param      {string}    authorizationHeader  The authorization header for RTI
  *                                              service
  * @param      {Function}  callback             A callback function that pass
  *                                              the error , response as well as
- *                                              the body of the http request
+ *                                              the body of the HTTP request
  */
 function getActions(baseUrl, authorizationHeader, callback) {
     var options = {
@@ -531,18 +543,16 @@ function getActions(baseUrl, authorizationHeader, callback) {
     });
 }
 
-
-
 /**
  * Get an RTI action id by its name
  *
- * @param      {string}    baseUrl              The base url of RTI REST API
+ * @param      {string}    baseUrl              The base Url of RTI REST API
  * @param      {string}    authorizationHeader  The authorization header for RTI
  *                                              service
  * @param      {string}    actionName           The RTI action name
  * @param      {Function}  callback             A callback function that pass
  *                                              the error , response as well as
- *                                              the body of the http request
+ *                                              the body of the HTTP request
  */
 function getActionId(baseUrl, authorizationHeader, actionName, callback) {
     getActions(baseUrl, authorizationHeader, function(err, res, body) {
@@ -571,17 +581,15 @@ function getActionId(baseUrl, authorizationHeader, actionName, callback) {
     });
 }
 
-
-
 /**
  * Get all rules within RTI service instance
  *
- * @param      {string}    baseUrl              The base url of RTI REST API
+ * @param      {string}    baseUrl              The base Url of RTI REST API
  * @param      {string}    authorizationHeader  The authorization header for RTI
  *                                              service
  * @param      {Function}  callback             A callback function that pass
  *                                              the error , response as well as
- *                                              the body of the http request
+ *                                              the body of the HTTP request
  */
 function getRules(baseUrl, authorizationHeader, callback) {
     var options = {
@@ -625,14 +633,13 @@ function getRuleId(baseUrl, authorizationHeader, ruleName, callback) {
     });
 }
 
-
 /**
  * A function to delete a rule by it Ids
  *
- * @param      {string}    baseUrl              The base url of RTI REST API
+ * @param      {string}    baseUrl              The base Url of RTI REST API
  * @param      {string}    authorizationHeader  The authorization header for RTI service
  * @param      {string}    ruleId               The rule id
- * @param      {Function}  callback             A callback function that pass the error , response as well as the body of the http request
+ * @param      {Function}  callback             A callback function that pass the error , response as well as the body of the HTTP request
  */
 function deleteRule(baseUrl, authorizationHeader, ruleId, callback) {
     var options = {
@@ -648,7 +655,6 @@ function deleteRule(baseUrl, authorizationHeader, ruleId, callback) {
         return callback(err, res, body);
     });
 }
-
 
 function updateAction(baseUrl, authorizationHeader, actionId, callbackBody, callback) {
 
@@ -675,10 +681,10 @@ function updateAction(baseUrl, authorizationHeader, actionId, callbackBody, call
  *  A function that check whether the parameters passed are required or not
  *
  * @param      {object}    params    An object contains the parameter required
- *                                   in otder to check it and generate a sting
+ *                                   in order to check it and generate a sting
  *                                   that contains list of missing parameters
  * @param      {Function}  callback  the callback function has the generated
- *                                   string or an empyt string if the params is
+ *                                   string or an empty string if the params is
  *                                   empty
  */
 function checkParameters(params, requiredParams, callback) {
