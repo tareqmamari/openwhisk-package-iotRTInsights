@@ -37,15 +37,15 @@ WSK_CLI="$3"
 PACKAGE_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo Uninstalling Watson IoT Real-Time insights Package \
 
-$WSK_CLI --apihost "$APIHOST" action update --auth "$AUTH"  iot-rti/add_message_source
+$WSK_CLI --apihost "$APIHOST" action delete --auth "$AUTH"  iot-rti/add_message_source
 
-$WSK_CLI --apihost "$APIHOST" action update --auth "$AUTH"  iot-rti/delete_message_source
+$WSK_CLI --apihost "$APIHOST" action delete --auth "$AUTH"  iot-rti/delete_message_source
 
-$WSK_CLI --apihost "$APIHOST" action update --auth "$AUTH"  iot-rti/add_message_schema
+$WSK_CLI --apihost "$APIHOST" action delete --auth "$AUTH"  iot-rti/add_message_schema
 
-$WSK_CLI --apihost "$APIHOST" action update --auth "$AUTH"  iot-rti/delete_message_schema
+$WSK_CLI --apihost "$APIHOST" action delete --auth "$AUTH"  iot-rti/delete_message_schema
 
-$WSK_CLI --apihost "$APIHOST" action update --auth "$AUTH"  iot-rti/webhook
+$WSK_CLI --apihost "$APIHOST" action delete --auth "$AUTH"  iot-rti/webhook
 
 $WSK_CLI --apihost "$APIHOST" package delete --auth "$AUTH" iot-rti \
 
