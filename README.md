@@ -1,8 +1,9 @@
 OpenWhisk Service Enablement
 ============================
-This repository is intended to document all actions and feeds withing Watson IoT Platform Reatime-insights service.
+This repository is intended to document all actions and feeds withing Watson IoT Reatime-insights service.
 
-looking for Watson IoT Platform ? [Here](https://github.com/tareqmamari/openwhisk-package-iot)
+Looking for Watson IoT Platform ? [Here](https://github.com/tareqmamari/openwhisk-package-iot)
+
 ##IBM Watson IoT Platform Analytics Real-Time Insights
 Reference: [IoT Real-Time Insights API](https://iotrti-prod.mam.ibmserviceengage.com/apidoc/)
 
@@ -26,9 +27,10 @@ In order to be able to use this package, you should have the following as a prer
 | --- | --- | --- | --- |
 | `/whisk.system/iot-rti` | package | apiKey, authToken  | IoT Real time insight service package |
 | `/whisk.system/iot-rti/webhook` | feed | see webhook [details](#webhook) | a feed to register for events by RTI, this will fire a trigger whenever specific conditions are met |
-| `/whisk.system/iot-rti/add_message_source` | action | see action [details](#add-message-source) | An action to add a message source ( Watson IoT Platform) to Real-time insights service |
+| `/whisk.system/iot-rti/add_message_source` | action | see action [details](#add-message-source) | Adddd a message source ( Watson IoT Platform) to Real-time insights service |
+| `/whisk.system/iot-rti/delete_message_source` | action | see action [details](#delete-message-source) | Delete a message source|
 | `/whisk.system/iot-rti/add_message_schema` | action | see action [details](#add-message-schema) | An action to add a message schema|
-
+| `/whisk.system/iot-rti/delete_message_schema` | action | see action [details](#delete-message-schema) | Delete a message schema|
 
 ###Actions:
 ####Add Message Source:
@@ -51,8 +53,45 @@ In order to be able to use this package, you should have the following as a prer
 wsk action invoke /whisk.system/iot-rti/add_message_source -p orgId 'xxxxx' -p apiKey 'yyyyyy' -p authToken 'zzzzzzzz' -p typeId 'sampleiot' -p deviceId "deviceId" --blocking
 ```
 
+Example of success response:
+```javascript
+{
+  "apiKey": "XXXXX",
+  "authToken": "YYYYY",
+  "created": "27 Jun 2016 17:20:35 GMT",
+  "disabled": false,
+  "id": "grNwDDKD",
+  "name": "source1",
+  "orgId": "zxdo1w",
+  "updated": "27 Jun 2016 17:20:35 GMT"
+}
+```
+
+
+####Delete Message Source:
+`/whisk.system/iot-rti/delete_message_source` is an action to delete a message source.
+
+#####Parameters
+
+| **Parameter**     | **Type** | **Required** | **Description**| **Options** | **Default** | **Example** |
+| ------------- | ---- | -------- | ------------ | ------- | ------- |------- |
+| apiKey | *string* | yes  |  RTI Api key | - | - | "XXXXXXXXX" |
+| authToken | *string* | yes  | RTI servvice authentication token| - | - |"YYYYYYY" |
+| name | *string* | no | name of the message source | - | -  |"message_source_name" |
+
+#####Usage
+```bash
+wsk action invoke /whisk.system/iot-rti/delete_message_source -p apiKey 'yyyyyy' -p authToken 'zzzzzzzz' -p name 'source1' --blocking
+```
+
+Example of success response:
+```javascript
+{"success": "message source deleted"}
+```
+
+
 ####Add Message Schema
-An action that create a new message schema which is used to parse the incoming messages to know its attributes whick will lead to consistent analytics.
+An action that create a new message schema which is used to parse the incoming messages to know its attributes.
 
 | **Parameter** | **Type** | **Required** | **Description**| **Options** | **Default** | **Example** |
 | ------------- | ---- | -------- | ------------ | ------- | ------- |------- |
@@ -102,11 +141,24 @@ where items.json contains
 [{ "name": "value", "description": "value of event", "type": "int", "subItems": [] }]
 ```
 
+####Delete Message Schema
+An action that delete an existing message schema.
+
+| **Parameter** | **Type** | **Required** | **Description**| **Options** | **Default** | **Example** |
+| ------------- | ---- | -------- | ------------ | ------- | ------- |------- |
+| apiKey | *string* | yes  |  RTI Api key | - | - | "XXXXXXXXX" |
+| authToken | *string* | yes  | RTP authentication token | - | - | "YYYYYYY" |
+| name | *string* | yes | message schema name ( mmust be unique) | - | - | "message schema" |
+#####Usage
+```bash
+wsk action invoke /whisk.system/iot-rti/add_message_schema -p name 'messageSchemaName' -p apiKey 'XXXXXX' -p authToken 'YYYYYY' --blocking
+```
+
 ###Feeds:
 ####Webhook:
  A feed which create an RTI rule and an RTI action to fire a trigger whenever the provided conditions are met.
 
- **Note:** there are two ways to register for an RTI webhook:
+ **Note:** there are two ways to create for an RTI webhook:
   - From Openwhisk: by using this feed action,
   - Or, from RTI service instance dashboard, while creating an RTI action you can specify openwhisk as a type and select the action or trigger to be invoked whenever there is an event. 
 
@@ -125,7 +177,7 @@ Example of creation:
 wsk trigger create rtiFeed --feed /whisk.system/iot-rti/webhook -p apiKey 'XXXXXXXX' -p authToken 'YYYYYYYY' -p schemaName 'schema'  -p condition 'schema.value>1'
 ```
 
-### Deploying Locally:
+### Local Deployment:
 This package contains an install script that will create a package and add the actions into it, to do so :
 ```bash
 git clone https://github.com/tareqmamari/openwhisk-package-iotRTInsights
@@ -136,4 +188,3 @@ cd openwhisk-package-iotRTInsights
 * **apihost**: endpoint of openwhisk,
 * **authkey**: authentication key e.g. $(cat $OPENWHISK_HOME/config/keys/auth.whisk.system) for whisk.system auth key,
 * **pathtowskcli**: path of Openwhisk CLI e.g. $OPENWHISK_HOME/bin/wsk
-

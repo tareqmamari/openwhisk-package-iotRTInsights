@@ -61,3 +61,10 @@ $WSK_CLI --apihost "$APIHOST" action update --auth "$AUTH" --shared yes iot-rti/
     -a parameters '[{"name":"apiKey","required":true,"bindTime":true,"description":"API Key Watson IoT RTI service"},{"name":"authToken","required":true,"bindTime":true,"description":"Authentication token of an Watson IoT RTI service","type":"password"},{"name":"name","required":false,"bindTime":false,"description":"Name of the message source"}]' \
     -a sampleInput '{"apiKey":"XXXXXX","authToken":"YYYYYY","name":"source1"}' \
     -a sampleOutput '{"created":"27 Jun 2016 14:47:03 GMT","deviceType":null,"format":"JSON","id":"YPtEVgFY","items":[{"composite":false,"description":"value","event":null,"formula":null,"id":1,"keyIndex":false,"length":null,"metaui":null,"name":"value2","subItems":[],"subType":null,"timestamp":false,"type":"int"}],"name":"messageSchemaName","updated":"27 Jun 2016 14:47:03 GMT"}'
+
+
+$WSK_CLI --apihost "$APIHOST" action update --auth "$AUTH" --shared yes iot-rti/delete_message_schema "$PACKAGE_HOME/iot-rti/delete_message_schema.js" \
+    -a description 'Add Message Schema' \
+    -a parameters '[{"name":"apiKey","required":true,"bindTime":true,"description":"API Key Watson IoT RTI service"},{"name":"authToken","required":true,"bindTime":true,"description":"Authentication token of an Watson IoT RTI service","type":"password"},{"name":"name","required":false,"bindTime":false,"description":"Name of the message schema"}]' \
+    -a sampleInput '{"apiKey":"XXXXXX","authToken":"YYYYYY","name":"messageSchema1"}' \
+    -a sampleOutput '{"created":"28 Jun 2016 08:21:22 GMT","deviceType":null,"format":"JSON","id":"TAJRVWtU","items":[{"composite":false,"description":"value","event":null,"formula":null,"id":1,"keyIndex":false,"length":null,"metaui":null,"name":"value2","subItems":[],"subType":null,"timestamp":false,"type":"int"}],"name":"messageSchema","updated":"28 Jun 2016 08:21:22 GMT"}'
