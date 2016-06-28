@@ -68,3 +68,8 @@ $WSK_CLI --apihost "$APIHOST" action update --auth "$AUTH" --shared yes iot-rti/
     -a parameters '[{"name":"apiKey","required":true,"bindTime":true,"description":"API Key Watson IoT RTI service"},{"name":"authToken","required":true,"bindTime":true,"description":"Authentication token of an Watson IoT RTI service","type":"password"},{"name":"name","required":false,"bindTime":false,"description":"Name of the message schema"}]' \
     -a sampleInput '{"apiKey":"XXXXXX","authToken":"YYYYYY","name":"messageSchema1"}' \
     -a sampleOutput '{"created":"28 Jun 2016 08:21:22 GMT","deviceType":null,"format":"JSON","id":"TAJRVWtU","items":[{"composite":false,"description":"value","event":null,"formula":null,"id":1,"keyIndex":false,"length":null,"metaui":null,"name":"value2","subItems":[],"subType":null,"timestamp":false,"type":"int"}],"name":"messageSchema","updated":"28 Jun 2016 08:21:22 GMT"}'
+
+$WSK_CLI --apihost "$APIHOST" action update --auth "$AUTH" --shared yes iot-rti/webhook "$PACKAGE_HOME/iot-rti/webhook.js" \
+    -a description 'A webhook to receive events from Real-Time Insights service' \
+    -a parameters '[{"name":"apiKey","required":true,"bindTime":true,"description":"API Key Watson IoT RTI service"},{"name":"authToken","required":true,"bindTime":true,"description":"Authentication token of an Watson IoT RTI service","type":"password"},{"name":"schemaName","required":true,"bindTime":true,"description":"Name of the message schema"},{"name":"condition","required":true,"bindTime":true,"description":"Predicate or some conditions joined with binary logical operators"}]' \
+    -a sampleInput '{"apiKey":"XXXXXX","authToken":"YYYYYY","schemaName":"messageSchema1", "condition":"messageSchema1.value>1"}' \
