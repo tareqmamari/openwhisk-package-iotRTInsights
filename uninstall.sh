@@ -48,5 +48,3 @@ $WSK_CLI --apihost "$APIHOST" action delete --auth "$AUTH"  iot-rti/delete_messa
 $WSK_CLI --apihost "$APIHOST" action delete --auth "$AUTH"  iot-rti/webhook
 
 $WSK_CLI --apihost "$APIHOST" package delete --auth "$AUTH" iot-rti \
-
-
