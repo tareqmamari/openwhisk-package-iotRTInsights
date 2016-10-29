@@ -1,3 +1,7 @@
+**Depreciated**
+
+Due to the merger of Watson IoT Platform and Watson IoT Real-Time Insights, this package is going to be merged with Watson IoT Platform package.
+
 OpenWhisk Service Enablement
 ============================
 This repository is intended to document all actions and feeds withing Watson IoT Reatime-insights service.
